@@ -1,0 +1,10 @@
+path: PATH_TO_DATASET A
+train: images/train2
+val: images/val2
+test: images/test2
+nc: 4
+names:
+- e1
+- e2
+- e3
+- e4
