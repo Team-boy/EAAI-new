@@ -1,0 +1,77 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Why cheap interventions fail.}
+The interventions in Table~\ref{tab:methods} share an implicit assumption: that
+a low-resolution model can be made sensitive enough to recover the misses.
+Distillation~\cite{kd} aligns a $640$ student to a $1280$ teacher, yet leaves the
+tiny-defect classes unchanged---feature alignment cannot reconstruct pixel
+evidence that the $640$ input never contained. Patch reinspection does access
+more pixels, but cropping removes the global context and scale distribution the
+high-resolution detector was trained on, so isolated patches recover few
+defects. Both observations point to the same conclusion: for visibility-limited
+defects the bottleneck is the input information itself, and only genuine
+full-image high resolution supplies it.
+
+\paragraph{Why selective triage helps.}
+VBAD does not attempt to circumvent this bottleneck; it decides when to pay for
+it. The oracle triage exceeds uniform high resolution because $640$ and $1280$
+are complementary: high resolution recovers visibility-limited defects but
+slightly harms easy images through scale-distribution shift, so retaining $640$
+where it suffices is beneficial. The learned head captures a usable part of this
+signal at a fraction of the cost, though a gap to the oracle remains. That gap
+is expected: a Type-V defect is by construction one the $640$ detector missed,
+so its evidence at $640$ is weak, bounding how well any head conditioned on
+$640$ features can anticipate it.
+
+\paragraph{The reliability boundary.}
+Perhaps the most consequential finding for deployment is that $42.8\%$ of missed
+defects are unrecoverable even at high resolution, concentrated in sub-pixel
+classes with scale-sensitive annotations. No resolution policy addresses these;
+they define a ceiling on automated recall. An inspection system that reports not
+only detections but also \emph{which images lie near this boundary} lets
+operators route uncertain cases to manual review---a more honest and practical
+behavior than silently optimizing a metric these instances cannot move.
+
+\paragraph{When does VBAD help? A contrasting dataset.}
+VBAD is only beneficial when a dataset actually contains visibility-limited
+defects. To probe this boundary we apply the same analysis to GC10-DET~\cite{gc10det}, a public
+metallic-surface defect benchmark of a different domain (10 classes, 2{,}292
+images). Table~\ref{tab:gc10} contrasts the two datasets. On GC10-DET the
+low-resolution detector already reaches a high recall ($0.673$), high resolution
+yields \emph{no} gain---in fact a slight drop in mAP ($0.657 \to 0.631$)---and
+only $8.1\%$ of defects are Type-V, versus $21.5\%$ on the fabric dataset. In
+other words, GC10-DET defects are largely visible at low resolution, so there is
+little for high-resolution reinspection to recover. The practical consequence is
+desirable: a visibility-aware policy triggers high resolution on only a small
+fraction of GC10-DET images and therefore neither wastes computation nor incurs
+the mild high-resolution degradation. VBAD thus adapts to the dataset---it
+contributes where visibility is the bottleneck and stays close to the
+low-resolution detector where it is not---rather than applying high resolution
+indiscriminately.
+
+\begin{table}[t]
+\centering
+\caption{When high resolution helps: the fabric dataset is visibility-limited,
+the metallic-surface dataset GC10-DET is not. mAP and recall on each test set.}
+\label{tab:gc10}
+\begin{tabular}{lcc}
+\toprule
+& Fabric (this work) & GC10-DET \\
+\midrule
+mAP$_{50}$ @640        & 0.397 & 0.657 \\
+mAP$_{50}$ @1280       & 0.482 & 0.631 \\
+High-res gain          & $+0.085$ & $-0.026$ \\
+Recall @640            & 0.410 & 0.673 \\
+Recall @1280           & 0.572 & 0.665 \\
+Type-V fraction        & 21.5\% & 8.1\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Limitations.}
+Our study uses a single public fabric dataset and two fixed resolutions; the
+triage policy is binary rather than a continuous resolution selector, and the
+visibility head conditions on global features only. Extending the framework to
+multiple resolution tiers, to other surface-inspection domains, and to a
+spatially localized visibility map are natural next steps.
