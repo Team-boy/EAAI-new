@@ -1,0 +1,40 @@
+\documentclass[preprint,11pt]{elsarticle}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figs/}}
+\journal{Engineering Applications of Artificial Intelligence}
+
+\begin{document}
+
+\begin{frontmatter}
+\title{Learning When to Inspect at High Resolution:\\
+Visibility-Aware Triage for Fabric Defect Detection}
+\author[a]{Kehan Yao\corref{cor1}}
+\ead{yaokh1996@hotmail.com}
+\author[b]{Haonan Feng}
+\cortext[cor1]{Corresponding author}
+\address[a]{China Telecom Group Hangzhou Branch, Hangzhou, China}
+\address[b]{The Third Research Institute of the Ministry of Public Security, Shanghai, China}
+\input{abstract}
+\end{frontmatter}
+
+\input{sec1_intro}
+\input{sec2_related}
+\input{sec3_method}
+\input{sec4_exp}
+\input{figures}
+\input{sec5_disc}
+\input{sec6_concl}
+
+\section*{Data availability}
+The fabric defect dataset is publicly available from Science Data Bank~\cite{scidb_fabric}
+(DOI: 10.57760/sciencedb.17138). The data split and the
+Type-V/Type-A construction scripts are released to support reproduction.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}
