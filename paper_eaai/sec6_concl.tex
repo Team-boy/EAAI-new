@@ -1,0 +1,18 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented a visibility-boundary-aware approach to fabric defect detection
+that reframes resolution as an engineering decision rather than a fixed setting.
+A cross-resolution diagnosis separates missed defects into threshold-suppressed,
+visibility-limited, and ambiguous types, and shows that cheap low-resolution
+interventions empirically fail to recover the visibility-limited ones---only
+full-image high resolution does, at a cost that is wasteful or harmful on easy
+data. The proposed framework learns from cross-resolution failure supervision
+when to trigger full-image high-resolution reinspection, recovering most of the
+high-resolution recall gain at a fraction of its cost, and explicitly exposes
+the fraction of defects that remain unrecoverable as a reliability boundary for
+human review. Rather than claiming to solve tiny-defect detection, the framework
+improves the recall--cost trade-off and makes the practical reliability limits
+of resolution-limited inspection explicit. Future work includes multi-tier
+resolution policies, spatially localized visibility estimation, and validation
+across additional surface-inspection domains.
