@@ -1,0 +1,93 @@
+\section{Method}
+\label{sec:method}
+
+We first formalize a cross-resolution failure taxonomy derived from the
+diagnosis (Section~\ref{sec:taxonomy}), then describe the Visibility-Boundary-Aware
+Detection (VBAD) framework (3.2), its visibility head (3.3), and an ambiguity
+boundary analysis (3.4).
+
+\subsection{Cross-resolution failure taxonomy}
+\label{sec:taxonomy}
+Let a detector at input resolution $r$ produce a set of detections $D_r$ for an
+image. A ground-truth defect $g$ is \emph{matched} by $D_r$ when some
+detection $d \in D_r$ satisfies
+\begin{equation}
+\mathrm{match}(d, g) \;=\; \big[\,\mathrm{IoU}(d, g) \ge 0.5\,\big] \wedge
+\big[\,\mathrm{cls}(d) = \mathrm{cls}(g)\,\big].
+\end{equation}
+Write $m_r(g) = 1$ if any detection in $D_r$ matches $g$, else $0$. Using a
+low-resolution detector ($r{=}640$) and a high-resolution detector
+($r{=}1280$), we partition every ground-truth defect into three types:
+\begin{align}
+\text{Type-N (normal)}:&\quad m_{640}(g) = 1,\\
+\text{Type-V (visibility-limited)}:&\quad m_{640}(g) = 0 \;\wedge\; m_{1280}(g) = 1,\\
+\text{Type-A (ambiguous)}:&\quad m_{640}(g) = 0 \;\wedge\; m_{1280}(g) = 0.
+\end{align}
+Type-N defects are already recovered cheaply. Type-V defects are the actionable
+set: their visual evidence is insufficient at $640$ but sufficient at $1280$,
+so they can be recovered by paying a higher resolution cost. Type-A defects
+remain missed even at high resolution; as the per-class analysis in
+Section~\ref{sec:exp} shows, these concentrate in extremely small
+($<0.05\%$ image area) and weak-texture categories whose annotations are
+themselves scale-sensitive, so we treat them as a reliability boundary rather
+than an optimization target. Crucially, the Type-V label is obtained
+automatically from cross-resolution failure agreement, not from manual
+heuristics.
+
+\subsection{VBAD framework}
+\label{sec:vbad}
+The key engineering question is \emph{when} to pay the high-resolution cost.
+Running $1280$ on every image is expensive and, as we show in
+Section~\ref{sec:exp}, can even degrade easy images due to scale-distribution
+shift. VBAD therefore performs a per-image triage (Fig.~
+\ref{fig:framework}):
+\begin{enumerate}[leftmargin=1.4em]
+\item Run the low-resolution detector to obtain detections $D_{640}$ and a
+backbone feature descriptor $\phi$.
+\item A lightweight \emph{visibility head} maps $\phi$ to a score
+$s_{\mathrm{vis}} \in [0, 1]$ estimating whether the image contains Type-V
+defects.
+\item If $s_{\mathrm{vis}} \ge \tau$, run the high-resolution detector on the
+\emph{full image} and use $D_{1280}$; otherwise keep $D_{640}$.
+\end{enumerate}
+We deliberately use full-image high-resolution reinspection rather than cropped
+patches. A patch-based variant (Section~\ref{sec:exp}) recovers far fewer
+defects because cropping discards the global context and scale distribution the
+high-resolution detector relies on. Because Type-N and Type-A defects do not
+benefit from the switch, and the two classes the framework routes between
+(640 vs 1280 outputs) are taken as-is, the merge step is a simple selection and
+needs no cross-resolution box fusion.
+
+\subsection{Visibility head}
+\label{sec:vishead}
+The visibility head is trained as an image-level binary classifier. Its target
+is
+\begin{equation}
+y_{\mathrm{vis}} = \mathbb{1}\big[\,\exists\, g : \text{Type-V}(g) = 1\,\big],
+\end{equation}
+i.e.\ the image contains at least one Type-V defect. The descriptor $\phi$
+concatenates the globally pooled backbone feature of the $640$ detector with
+four cheap scalar cues available from the same forward pass: the number of
+low-confidence detections (score in $[0.05, 0.25)$, exposing
+threshold-suppressed boxes), the number of confident detections, the smallest
+predicted box area, and the mean detection confidence. A two-layer perceptron
+maps $\phi$ to $s_{\mathrm{vis}}$, optimized with a class-balanced binary
+cross-entropy loss
+\begin{equation}
+\mathcal{L} = \mathrm{BCE}\big(s_{\mathrm{vis}}, y_{\mathrm{vis}}; w_{+}\big),
+\end{equation}
+where $w_{+}$ reweights the positive class by its inverse frequency. The
+detector is \emph{frozen} while the visibility head is trained, isolating the
+triage-learning problem from detector optimization and keeping the added cost
+of the head negligible relative to a detector forward pass.
+
+\subsection{Ambiguity boundary analysis}
+\label{sec:ambiguity}
+Beyond triage, VBAD exposes a reliability boundary. The Type-A set---defects
+missed even at high resolution---quantifies how many misses are
+\emph{inherently unrecoverable} by resolution alone. We report the Type-A
+fraction overall and per class, together with object-size and annotation
+statistics, as a diagnostic rather than a trained component. In an industrial
+inspection setting this boundary is directly actionable: images or classes with
+high Type-A rates are precisely those an automated system should escalate to
+manual review instead of optimizing against.
