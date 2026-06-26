@@ -1,0 +1,27 @@
+path: PATH_TO_DATASET B
+train: images/train2
+val: images/val2
+test: images/test2
+nc: 21
+names:
+- '0'
+- '1'
+- '2'
+- '3'
+- '4'
+- '5'
+- '6'
+- '7'
+- '8'
+- '9'
+- '10'
+- '11'
+- '12'
+- '13'
+- '14'
+- '15'
+- '16'
+- '17'
+- '18'
+- '19'
+- '20'
