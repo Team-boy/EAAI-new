@@ -1,0 +1,47 @@
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig1_framework.pdf}
+\caption{The VBAD framework. A frozen low-resolution detector produces
+detections and a feature descriptor; a lightweight visibility head, supervised
+by cross-resolution failure (Type-V), decides whether to trigger full-image
+high-resolution reinspection. Easy images keep the low-resolution result.}
+\label{fig:framework}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\linewidth]{fig2_taxonomy.pdf}
+\caption{Cross-resolution failure taxonomy (test set). For each group, the
+fraction of ground-truth defects that are Type-N (detected at $640$), Type-V
+(recovered at $1280$), and Type-A (unrecoverable even at $1280$). Tiny-defect
+classes are dominated by Type-A.}
+\label{fig:taxonomy}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\linewidth]{fig3_recall_cost.pdf}
+\caption{Recall--cost trade-off (test set). VBAD dominates the simple min-box
+trigger and approaches full high-resolution recall at far lower cost; the oracle
+triage exceeds uniform high resolution by retaining low resolution on easy
+images.}
+\label{fig:recallcost}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{fig5_roc.pdf}
+\caption{Visibility head ROC for predicting Type-V images. The moderate AUC
+reflects that Type-V evidence is only weakly observable at $640$.}
+\label{fig:roc}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{fig4_examples.pdf}
+\caption{Representative Type-V and Type-A defects (test set). Top: Type-V
+defects missed at 640 but recovered at 1280 (dashed). Bottom: Type-A defects
+missed even at 1280. The latter are faint, sub-pixel-scale anomalies whose
+ground-truth annotations are themselves scale-sensitive.}
+\label{fig:examples}
+\end{figure}
