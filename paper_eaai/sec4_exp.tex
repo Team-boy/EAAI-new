@@ -1,0 +1,161 @@
+\section{Experiments}
+\label{sec:exp}
+
+\subsection{Dataset and protocol}
+We evaluate on a public fabric defect detection dataset from Science Data
+Bank~\cite{scidb_fabric}
+(Table~\ref{tab:data}). It contains 21 defect categories over ${\sim}4{,}800$
+images with a strongly long-tailed distribution. We freeze the original
+validation split as a held-out test set and carve a class-stratified $15\%$ of
+the training split for model selection, yielding $3{,}257$ training / $563$
+validation / $954$ test images; all reported numbers are on the held-out test
+set. Detectors are trained under an identical equal-budget protocol
+(200 epochs, batch size 16) at the stated input resolution. We report
+COCO-style~\cite{coco} mAP@0.5 and per-group recall (head/medium/tail by training-instance
+count), and---for the visibility analysis---per-ground-truth recall at
+IoU${=}0.5$. The split and the Type-V/Type-A construction scripts are released
+for reproducibility.
+
+\begin{table}[t]
+\centering
+\caption{Dataset statistics (held-out test set).}
+\label{tab:data}
+\begin{tabular}{lc}
+\toprule
+Property & Value \\
+\midrule
+Defect categories & 21 \\
+Train / val / test images & 3{,}257 / 563 / 954 \\
+Test ground-truth defects & 1{,}625 \\
+Imbalance ratio (head:tail instances) & $1531\times$ \\
+Tiny defects ($<0.05\%$ image area) & cls7 66\%, cls17 69\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Resolution is effective but not free}
+Table~\ref{tab:resolution} reports the effect of input resolution. Raising
+resolution from $640$ to $960$--$1280$ lifts mAP from $0.397$ to ${\sim}0.50$
+($+10$ points, $0.501{\pm}0.014$ over three seeds at $1280$), and the gain is
+consistent across detector families (YOLOv11m@1280${=}0.515$). However, the
+benefit saturates: $1536$ does not improve over $1280$. More importantly, on a
+near-balanced 4-class control dataset (also from Science Data Bank) the same high-resolution setting
+\emph{reduces} mAP from $0.906$ to $0.862$. High resolution is thus effective
+for hard, visibility-limited data but wasteful or harmful otherwise---motivating
+selective use.
+
+\begin{table}[t]
+\centering
+\caption{Effect of input resolution (fabric test set). $^\dagger$mean$\pm$std
+over three seeds.}
+\label{tab:resolution}
+\begin{tabular}{lcccc}
+\toprule
+Resolution & mAP$_{50}$ & $R_\text{head}$ & $R_\text{med}$ & $R_\text{tail}$ \\
+\midrule
+640 (baseline)     & 0.397 & 0.554 & 0.367 & 0.475 \\
+960                & 0.496 & 0.615 & 0.442 & 0.527 \\
+1280$^\dagger$     & $0.501{\pm}.014$ & 0.611 & 0.482 & 0.538 \\
+1536               & 0.499 & 0.608 & 0.498 & 0.441 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cheap interventions fail to recover visibility-limited misses}
+Before triage, we ask whether a cheaper alternative to high resolution exists.
+Table~\ref{tab:methods} summarizes six low-resolution interventions (with the baseline) trained at $640$. Per-class
+threshold calibration trades precision for recall along the existing curve;
+miss-rate loss reweighting only redistributes recall (mAP $0.397{\to}0.398$); a
+smaller backbone and a P2 small-object head both reduce mAP; feature
+distillation from a $1280$ teacher recovers only $+2.4$ points and leaves the
+tiny-defect classes unchanged; and a sparse patch-reinspection variant has an
+oracle recall of $0.463$, below full $1280$, because cropping discards global
+context. None recovers the tiny-defect classes, which require genuine
+high-resolution pixels rather than improved low-resolution representation.
+
+\begin{table}[t]
+\centering
+\caption{Low-resolution interventions on fabric test set. None recovers the
+visibility-limited misses; only full high resolution does.}
+\label{tab:methods}
+\begin{tabular}{lc}
+\toprule
+Method (input $640$ unless noted) & mAP$_{50}$ \\
+\midrule
+Baseline                              & 0.397 \\
+Per-class threshold calibration       & R$+0.09$ / P$-0.10$ \\
+Miss-rate loss reweighting            & 0.398 \\
+Smaller backbone (anti-overfit)       & 0.365 \\
+P2 small-object head                  & 0.365 \\
+Feature distillation ($1280{\to}640$) & 0.421 \\
+Sparse patch reinspection (oracle)    & 0.463 \\
+\midrule
+Full high resolution ($1280$)         & 0.482 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{VBAD triage}
+Table~\ref{tab:vbad} and Fig.~\ref{fig:recallcost} report the triage results
+at the ground-truth recall level. Full $1280$ raises recall from $0.410$ to $0.572$ but quadruples cost.
+An oracle that triggers high resolution exactly on images containing Type-V
+defects reaches $0.615$---\emph{above} full $1280$---at only $29\%$ trigger
+rate, because retaining $640$ on easy images avoids the high-resolution
+degradation. The learned visibility head attains recall $0.52$ at $40\%$
+trigger rate (relative cost $2.6\times$ vs.\ $4.0\times$ for full $1280$),
+recovering about $69\%$ of the $640{\to}1280$ recall gain at roughly $63\%$ of
+the high-resolution cost. The head predicts Type-V images with
+AUC${=}0.66$ (Fig.~\ref{fig:roc}); the gap to the oracle reflects that Type-V evidence is only
+weakly observable at $640$ (by definition the $640$ detector missed it).
+
+\begin{table}[t]
+\centering
+\caption{VBAD triage on fabric test set (per-GT recall). Relative cost
+counts the $640$ pass on all images plus the $1280$ pass on triggered images
+($1280 {\approx} 4{\times}$ the FLOPs of $640$).}
+\label{tab:vbad}
+\begin{tabular}{lccc}
+\toprule
+Method & Recall & Trigger & Rel.\ cost \\
+\midrule
+Low-res $640$            & 0.410 & 0\%    & $1.0\times$ \\
+Full high-res $1280$     & 0.572 & 100\%  & $4.0\times$ \\
+Simple trigger (min-box) & 0.471 & 30\%   & $2.2\times$ \\
+\textbf{VBAD (learned head)} & \textbf{0.521} & 40\% & $2.6\times$ \\
+VBAD (oracle)            & 0.615 & 29\%   & $2.2\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tiny-defect classes and the ambiguity boundary}
+Table~\ref{tab:ambiguity} and Fig.~\ref{fig:taxonomy} examine where recall is lost. For the tiny-defect
+classes, high resolution helps substantially (e.g.\ spandex-break
+$0.32{\to}0.66$, hanging-warp $0.16{\to}0.56$), confirming the
+visibility-limited diagnosis. Yet a large Type-A fraction remains: overall
+$42.8\%$ of test defects are missed even at $1280$, rising to $73\%$ (nep) and
+$74\%$ (weft-shrink) for the hardest tiny classes. These are dominated by
+sub-$0.05\%$-area instances whose annotations are themselves uncertain. Figure~
+\ref{fig:examples} shows representative cases. VBAD
+surfaces this fraction explicitly, marking it as a reliability boundary for
+human review rather than a target for further optimization.
+
+\begin{table}[t]
+\centering
+\caption{Tiny-defect classes and Type-A (unrecoverable) rate on the fabric dataset test
+set. $R_{640}/R_{1280}$ are per-GT recall.}
+\label{tab:ambiguity}
+\begin{tabular}{lcccc}
+\toprule
+Class & $n$ & $R_{640}$ & $R_{1280}$ & Type-A \\
+\midrule
+nep (cls7)            & 33  & 0.18 & 0.27 & 73\% \\
+broken-warp (cls10)   & 48  & 0.19 & 0.35 & 65\% \\
+hanging-warp (cls11)  & 32  & 0.16 & 0.56 & 44\% \\
+weft-shrink (cls13)   & 53  & 0.09 & 0.26 & 74\% \\
+spandex-break (cls17) & 149 & 0.32 & 0.66 & 34\% \\
+\midrule
+All classes           & 1625 & 0.410 & 0.572 & 42.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
