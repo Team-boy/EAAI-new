@@ -1,0 +1,29 @@
+\begin{abstract}
+Industrial fabric inspection requires detecting tiny and weakly visible defects
+under constrained computation. Low-resolution detectors are efficient but miss
+defects whose visual evidence is insufficient, whereas full high-resolution
+inference is expensive and may even degrade easy cases due to scale-distribution
+shift. This paper proposes a visibility-boundary-aware detection framework for
+industrial fabric defect inspection. Through a cross-resolution failure
+diagnosis we show that a range of cheap interventions---threshold calibration,
+loss reweighting, knowledge distillation, and sparse patch reinspection---fail
+to recover visibility-limited misses, because the missing evidence is not
+present in the low-resolution input. Guided by this diagnosis, the proposed
+framework uses cross-resolution failure supervision to learn which images are
+visibility-limited and selectively triggers full-image high-resolution
+reinspection only on those, while explicitly separating ambiguous defects that
+remain unrecoverable even at high resolution. On a public fabric defect
+detection dataset from Science Data Bank, the method recovers about $69\%$ of
+the high-resolution recall gain at roughly $63\%$ of its computational cost, and
+an oracle triage even exceeds uniform high-resolution inference by retaining
+low-resolution inference on easy images. The analysis further reveals that a
+large fraction of missed defects are inherently ambiguous or
+annotation-sensitive, highlighting practical reliability boundaries for
+AI-based fabric inspection.
+\end{abstract}
+
+\begin{keyword}
+fabric defect detection \sep industrial visual inspection \sep
+adaptive-resolution inference \sep cross-resolution failure analysis \sep
+reliability-aware detection
+\end{keyword}
