@@ -1,0 +1,63 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Fabric and surface defect detection.}
+Automated fabric inspection has moved from hand-crafted texture analysis to deep
+detectors~\cite{fabricsurvey}. Recent fabric-specific models improve sensitivity
+to small and subtle defects through fine-grained convolutions, attention
+modules~\cite{cbam}, small-object detection layers, and tiny-object loss
+functions~\cite{fabricyolo,liang2025denim}; recent surveys review this rapidly
+growing literature~\cite{eaaisurvey}. These methods frame the residual
+difficulty as a model-capacity problem and seek a stronger low-resolution
+detector; they do not separate misses that are recoverable in principle from
+ misses caused by insufficient input resolution.
+
+\paragraph{Small-object and industrial defect detection.}
+Small-object detection is a long-standing challenge, addressed through
+higher-resolution features, scale-aware training, context, and
+augmentation~\cite{sodsurvey,focalloss}. In industrial inspection, benchmarks
+span metallic surface defects~\cite{neudet} and unsupervised anomaly
+detection~\cite{mvtecad}, and class-imbalance-aware detectors have been
+proposed for defects with rare categories~\cite{eaaiimbalance}. Our work is complementary: rather than proposing a
+stronger detector or anomaly model, we analyze when input resolution is the
+binding constraint and act on that diagnosis.
+
+\paragraph{Object detectors.}
+Modern object detection spans two-stage detectors built on region
+proposals~\cite{fasterrcnn} and single-stage detectors that regress boxes
+directly~\cite{yolov1,ssd}, typically over deep residual
+backbones~\cite{resnet} with multi-scale feature
+pyramids~\cite{fpn}. We build on standard real-time detectors spanning the
+anchor-free YOLO line~\cite{yolov1,yolov8,yolo11} and the
+detection-transformer line (DETR~\cite{detr}, Deformable DETR~\cite{deformabledetr}, RT-DETR~\cite{rtdetr}); our
+diagnosis and framework treat the detector as a frozen black box and are not
+specific to either family.
+
+\paragraph{Resolution, tiling, and adaptive inference.}
+High input resolution is a well-known lever for small-object detection, and
+sliding-window or tiling schemes such as SAHI~\cite{sahi} process an image at high
+resolution in pieces. These apply high resolution \emph{uniformly} (to the whole
+image or to a regular grid), incurring large cost. Adaptive-resolution and
+coarse-to-fine methods~\cite{ranet,drnet,dynamiczoom} reduce this cost by
+selecting where to look or at what resolution to process, typically driven by
+objectness, confidence, or a learned resolution predictor. VBAD differs in its supervision:
+the trigger is learned from \emph{cross-resolution failure modes}---images where
+low resolution demonstrably fails and high resolution demonstrably recovers---
+rather than from generic saliency or confidence heuristics, tying the decision
+directly to when high resolution is actually worthwhile.
+
+\paragraph{Class imbalance and long-tailed recognition.}
+Fabric defect categories are heavily imbalanced. Long-tailed recognition has
+been tackled by loss reweighting~\cite{eql,focalloss}, decoupling
+representation from classifier learning~\cite{decoupling}, bilateral-branch
+architectures~\cite{bbn}, and minority-class augmentation such as
+copy-paste~\cite{copypaste}. Our diagnosis shows, however, that on this fabric
+benchmark per-class difficulty is governed by visibility rather than frequency,
+so frequency-indexed remedies are not the binding lever; we therefore focus on
+the resolution dimension.
+
+\paragraph{Detector error analysis.}
+Diagnostic toolkits such as TIDE~\cite{errortaxonomy} decompose detector errors
+into interpretable types. We instantiate a resolution-centric analysis for
+industrial inspection and, unlike purely diagnostic work, turn the analysis into
+an operational triage policy and a reliability boundary.
