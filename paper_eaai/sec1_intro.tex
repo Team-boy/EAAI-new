@@ -1,0 +1,57 @@
+\section{Introduction}
+\label{sec:intro}
+
+Fabric defect detection is a representative industrial visual inspection task
+that demands high recall, low latency, and low computational cost
+simultaneously. In production settings, missing a defect is costly, yet
+inspection must keep pace with high-throughput manufacturing on commodity
+hardware. A central difficulty is that many fabric defects---nep, broken or
+hanging warp, weft shrinkage, and weak-texture anomalies---are extremely small
+or visually faint, and are easily missed when detectors operate at the low
+input resolutions favored for efficiency.
+
+Most prior work treats such misses as a model-capacity problem, addressing them
+through network architecture, loss design, knowledge distillation, multi-scale
+training, or sliding-window inference. These approaches implicitly assume that a
+missed defect could have been detected with a better low-resolution model. They
+do not distinguish between a \emph{recoverable} miss---where the evidence is
+present but the model is insufficiently sensitive---and a miss caused by
+\emph{insufficient input information}, where the defect occupies too few pixels
+for any low-resolution model to recover.
+
+We make this distinction concrete through a cross-resolution diagnosis. Running
+the same detector at low ($640$) and high ($1280$) resolution partitions missed
+defects into three regimes: threshold-suppressed misses recoverable by
+calibration; visibility-limited misses recoverable only by genuine high
+resolution; and ambiguous misses that persist even at high resolution. We then
+show empirically that a range of cheap interventions---per-class threshold
+calibration, miss-rate loss reweighting~\cite{focalloss,eql}, a small-object detection head, feature
+distillation, and sparse patch reinspection---fail to recover the
+visibility-limited misses. Only full-image high-resolution inference recovers
+them, but it quadruples cost and, on easy data, can even reduce accuracy.
+
+This motivates treating the problem not as one of improving low-resolution
+representation, but as one of \emph{deciding when to pay the high-resolution
+cost}. We propose Visibility-Boundary-Aware Detection (VBAD). VBAD constructs a
+visibility label automatically from cross-resolution failure agreement
+(low-resolution miss followed by high-resolution recovery), trains a lightweight
+visibility head on a frozen detector to predict it, and selectively triggers
+full-image high-resolution reinspection only on images judged
+visibility-limited. It additionally surfaces the ambiguous, unrecoverable
+fraction as a reliability boundary for human review.
+
+Our contributions are:
+\begin{enumerate}[leftmargin=1.5em]
+\item A cross-resolution failure diagnosis for industrial fabric defect
+detection, showing that missed defects arise from threshold suppression,
+visibility limitation, and ambiguous low-reliability cases, and that cheap
+low-resolution interventions empirically fail to recover the visibility-limited
+ones.
+\item A visibility-boundary-aware detection framework that learns from
+cross-resolution failure supervision to selectively trigger full-image
+high-resolution reinspection, improving the recall--cost trade-off over both
+uniform low- and high-resolution inference.
+\item Validation on a public Science Data Bank fabric defect dataset, including
+an ambiguity boundary analysis that quantifies how many missed defects are
+inherently unrecoverable and should be escalated for manual review.
+\end{enumerate}
