@@ -1,0 +1,17 @@
+*.pt
+*.pth
+*.zip
+*.tar.gz
+*.cache
+__pycache__/
+*.pkl
+runs/
+results/
+data/
+images/
+*.jpg
+*.png
+.venv/
+kaggle.json
+*.json
+!paper_eaai/**/*.json
